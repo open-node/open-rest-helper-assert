@@ -1,6 +1,5 @@
 var delegate  = require('func-delegate')
-  , _         = require('lodash')
-  , Sequelize = require('sequelize');
+  , _         = require('lodash');
 
 // 检测某字段是否与指定的值是否相同，如果不同则报错
 var equal = function(keyPath, obj, error) {
