@@ -349,6 +349,40 @@ describe("open-rest-helper-assert", function() {
       });
     });
 
+    it("obj1 is fixed value compare obj2 is map true", function(done) {
+      var has = helper.has({fixed: 2}, {path: 'params.users'}, Error('Hello'));
+      var users = new Map();
+      users.set(2, {});
+      var req = {
+        params: {
+          users: users
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("obj1 is fixed value compare obj2 is map false", function(done) {
+      var has = helper.has({fixed: '2'}, {path: 'params.users'}, Error('Hello'));
+      var users = new Map();
+      users.set(5, {});
+      var req = {
+        params: {
+          users: users
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+
     it("Keypath compare not has obj1 isnt number true", function(done) {
       var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
       var req = {

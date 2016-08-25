@@ -33,6 +33,8 @@ var _has = function(obj1, obj2, has) {
     }
     if (_.isSet(value2)) {
       if (value2.has(value1)) return has;
+    } else if (_.isMap(value2)) {
+      if (value2.has(value1)) return has;
     } else if (_.isArray(value2)) {
       if (value2.indexOf(value1) !== -1) return has;
     } else if (_.isObject(value2)) {
