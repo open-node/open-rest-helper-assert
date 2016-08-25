@@ -1,186 +1,697 @@
 var assert      = require('assert')
-  , Sequelize   = require('sequelize')
-  , getter      = require('../');
+  , helper      = require('../');
 
-var sequelize = new Sequelize();
-var Model = sequelize.define('book', {
-  id: {
-    type: Sequelize.INTEGER.UNSIGNED,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  name: Sequelize.STRING(100)
-});
+describe("open-rest-helper-assert", function() {
 
-var modelInclude = function(params, includes) {
-  var ret;
-  if (!includes) return;
-  if (!_.isString(params.includes)) return;
-  ret = _.filter(params.includes.split(','), function(x) {
-    return includes[x];
-  });
-  if (ret.length === 0) return;
-  return _.map(ret, function(x) {
-    return _.clone(includes[x]);
-  });
-};
-
-describe("open-rest-helper-getter", function() {
-  describe("Helper init", function() {
-    it("First argument type error", function(done) {
+  describe("equal", function() {
+    it("Keypath type error", function(done) {
       assert.throws(function() {
-        getter({});
+        helper.equal({});
       }, function(err) {
-        return err instanceof Error && err.message === 'Model must be a class of Sequelize defined'
+        return err instanceof Error && err.message === 'Gets the value at path of object.'
       });
       done();
     });
 
-    it("First argument lack model attr", function(done) {
+    it("obj type error", function(done) {
       assert.throws(function() {
-        getter(Model);
+        helper.equal('hooks.user.id', 'hello world');
       }, function(err) {
-        return err instanceof Error && err.message === 'Please use open-rest version>=7.0.0';
+        return err instanceof Error && err.message === 'Fixed value or path of req object'
       });
       done();
     });
 
-    it("First argument lack model.modelInclude method ", function(done) {
+    it("obj validate error", function(done) {
       assert.throws(function() {
-        Model.model = {};
-        getter(Model);
+        helper.equal('hooks.user.id', {name: 'Stone'});
       }, function(err) {
-        return err instanceof Error && err.message === 'Please use open-rest version>=7.0.0';
+        return err instanceof Error && err.message === 'Argument obj contains at least fixed, path one of them.'
       });
       done();
     });
 
-    it("Second argument must be string", function(done) {
+    it("error type error", function(done) {
       assert.throws(function() {
-        Model.model = {modelInclude: modelInclude};
-        getter(Model);
+        helper.equal('hooks.user.id', {fixed: 2}, 22);
       }, function(err) {
-        return err instanceof Error && err.message === 'Geted instance will hook on req.hooks[hook], so `hook` must be a string'
+        return err instanceof Error && err.message === 'The error is called next when assert faild.'
       });
       done();
     });
 
-    it("Third argument must be string", function(done) {
-      assert.throws(function() {
-        Model.model = {modelInclude: modelInclude};
-        getter(Model, 'book', []);
-      }, function(err) {
-        return err instanceof Error && err.message === 'req.params[id] or req.hooks[obj][id], id is key\'s name'
-      });
-      done();
-    });
-
-    it("The 4th argument must be string", function(done) {
-      assert.throws(function() {
-        Model.model = {modelInclude: modelInclude};
-        getter(Model, 'book', 'bookId', []);
-      }, function(err) {
-        return err instanceof Error && err.message === 'req.params[id] or req.hooks[obj][id] obj is hook\'s name'
-      });
-      done();
-    });
-
-    it("All arguments right no exception", function(done) {
-      var helper = getter(Model, 'book');
-      var req = {
-        hooks: {},
-        params: {id: 20}
-      };
-      var res = {};
-      var book = {id: 20, name: 'JavaScript 高级程序设计'};
-
-      Model.find = function(opts) {
-        assert.deepEqual({where: {id: 20}}, opts);
-        return new Promise(function(resolve, reject) {
-          resolve(book);
-        });
-      };
-
-      helper(req, res, function(err) {
-        assert.equal(null, err);
-        assert.equal(req.hooks['book'], book);
-        done();
-      });
-    });
-
-    it("All arguments right no exception id = req.hooks[obj][id]", function(done) {
-      var helper = getter(Model, 'book', 'bookId', 'user');
+    it("fixed compare equal", function(done) {
+      var equal = helper.equal('hooks.user.id', {fixed: 1}, Error('Hello'));
       var req = {
         hooks: {
-          user: {bookId: 30}
+          user: {id: 1}
+        }
+      };
+      var res = {};
+      equal(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("fixed compare not equal", function(done) {
+      var equal = helper.equal('hooks.user.id', {fixed: 1}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 2}
+        }
+      };
+      var res = {};
+      equal(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare equal", function(done) {
+      var equal = helper.equal('hooks.user.id', {path: 'params.userId'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
         },
-        params: {id: 20}
+        params: {
+          userId: 1
+        }
       };
       var res = {};
-      var book = {id: 20, name: 'JavaScript 高级程序设计'};
-
-      Model.find = function(opts) {
-        assert.deepEqual({where: {id: 30}}, opts);
-        return new Promise(function(resolve, reject) {
-          resolve(book);
-        });
-      };
-
-      helper(req, res, function(err) {
-        assert.equal(null, err);
-        assert.equal(req.hooks['book'], book);
+      equal(req, res, function(error) {
+        assert.equal(null, error);
         done();
       });
     });
 
-
-    it("All arguments right has exception", function(done) {
-      var helper = getter(Model, 'book');
+    it("Keypath compare not equal", function(done) {
+      var equal = helper.equal('hooks.user.id', {path: 'params.userId'}, Error('Hello'));
       var req = {
-        hooks: {},
-        params: {id: 20}
+        hooks: {
+          user: {id: 2}
+        },
+        params: {
+          userId: 1
+        }
       };
       var res = {};
-      var error = Error('Find book error');
-
-      Model.find = function(opts) {
-        assert.deepEqual({where: {id: 20}}, opts);
-        return new Promise(function(resolve, reject) {
-          reject(error);
-        });
-      };
-
-      helper(req, res, function(err) {
-        assert.equal(error, err);
-        assert.equal(req.hooks['book'], undefined);
-        done();
-      });
-    });
-
-    it("All arguments right includes", function(done) {
-      var helper = getter(Model, 'book');
-      var req = {
-        hooks: {},
-        params: {id: 20}
-      };
-      var res = {};
-      var error = Error('Find book error');
-
-      Model.find = function(opts) {
-        assert.deepEqual({where: {id: 20}, include: 'ONLY_FOR_TEST'}, opts);
-        return new Promise(function(resolve, reject) {
-          reject(error);
-        });
-      };
-
-      Model.model.modelInclude = function() {
-        return 'ONLY_FOR_TEST';
-      };
-      helper(req, res, function(err) {
-        assert.equal(error, err);
-        assert.equal(req.hooks['book'], undefined);
+      equal(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
         done();
       });
     });
   });
+
+  describe("notEqual", function() {
+    it("Keypath type error", function(done) {
+      assert.throws(function() {
+        helper.notEqual({});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Gets the value at path of object.'
+      });
+      done();
+    });
+
+    it("obj type error", function(done) {
+      assert.throws(function() {
+        helper.notEqual('hooks.user.id', 'hello world');
+      }, function(err) {
+        return err instanceof Error && err.message === 'Fixed value or path of req object'
+      });
+      done();
+    });
+
+    it("obj validate error", function(done) {
+      assert.throws(function() {
+        helper.notEqual('hooks.user.id', {name: 'Stone'});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj contains at least fixed, path one of them.'
+      });
+      done();
+    });
+
+    it("error type error", function(done) {
+      assert.throws(function() {
+        helper.notEqual('hooks.user.id', {fixed: 2}, 22);
+      }, function(err) {
+        return err instanceof Error && err.message === 'The error is called next when assert faild.'
+      });
+      done();
+    });
+
+    it("fixed compare equal", function(done) {
+      var notEqual = helper.notEqual('hooks.user.id', {fixed: 1}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
+        }
+      };
+      var res = {};
+      notEqual(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("fixed compare not equal", function(done) {
+      var notEqual = helper.notEqual('hooks.user.id', {fixed: 1}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 2}
+        }
+      };
+      var res = {};
+      notEqual(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare equal", function(done) {
+      var notEqual = helper.notEqual('hooks.user.id', {path: 'params.userId'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
+        },
+        params: {
+          userId: 1
+        }
+      };
+      var res = {};
+      notEqual(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not equal", function(done) {
+      var notEqual = helper.notEqual('hooks.user.id', {path: 'params.userId'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 2}
+        },
+        params: {
+          userId: 1
+        }
+      };
+      var res = {};
+      notEqual(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+  });
+
+  describe("has", function() {
+    it("obj type error", function(done) {
+      assert.throws(function() {
+        helper.has('hello');
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj1 is fixed value or path of req object'
+      });
+      done();
+    });
+
+    it("obj2 type error", function(done) {
+      assert.throws(function() {
+        helper.has({path: 'hooks.user.id'}, 'hello world');
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj2 is fixed value or path of req object'
+      });
+      done();
+    });
+
+    it("obj1 validate error", function(done) {
+      assert.throws(function() {
+        helper.has({name: 'hooks.user.id'});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj1 contains at least fixed, path one of them.'
+      });
+      done();
+    });
+
+    it("obj2 validate error", function(done) {
+      assert.throws(function() {
+        helper.has({path: 'hooks.user.id'}, {name: 'hello world'});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj2 contains at least fixed, path one of them.'
+      });
+      done();
+    });
+
+    it("error type error", function(done) {
+      assert.throws(function() {
+        helper.has({path: 'hooks.user.id'}, {fixed: [2, 3, 5]}, 22);
+      }, function(err) {
+        return err instanceof Error && err.message === 'The error is called next when assert faild.'
+      });
+      done();
+    });
+
+    it("fixed compare has true", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {fixed: [1, 2, 3]}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("fixed compare not has", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {fixed: [1, 2, 3]}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare has", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare not has", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 isnt number false", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: '4'}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("obj1 is fixed value compare true", function(done) {
+      var has = helper.has({fixed: '2'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 isnt number true", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: '3'}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is array", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is Set false", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        },
+        params: {
+          users: new Set([1, 2, 3])
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is Set true", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 2}
+        },
+        params: {
+          users: new Set([1, 2, 3])
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is Set false", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 5}
+        },
+        params: {
+          users: new Set([1, 2, 3])
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is object true", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 'name'}
+        },
+        params: {
+          users: {name: 'Redstone'}
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is object false", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 'age'}
+        },
+        params: {
+          users: {name: 'Redstone'}
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare not has obj1 is string, obj2 is null", function(done) {
+      var has = helper.has({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 'age'}
+        },
+        params: {
+          users: null
+        }
+      };
+      var res = {};
+      has(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+  });
+
+  describe("notHas", function() {
+    it("obj type error", function(done) {
+      assert.throws(function() {
+        helper.notHas('hello');
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj1 is fixed value or path of req object'
+      });
+      done();
+    });
+
+    it("obj2 type error", function(done) {
+      assert.throws(function() {
+        helper.notHas({path: 'hooks.user.id'}, 'hello world');
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj2 is fixed value or path of req object'
+      });
+      done();
+    });
+
+    it("obj1 validate error", function(done) {
+      assert.throws(function() {
+        helper.notHas({name: 'hooks.user.id'});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj1 contains at least fixed, path one of them.'
+      });
+      done();
+    });
+
+    it("obj2 validate error", function(done) {
+      assert.throws(function() {
+        helper.notHas({path: 'hooks.user.id'}, {name: 'hello world'});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Argument obj2 contains at least fixed, path one of them.'
+      });
+      done();
+    });
+
+    it("error type error", function(done) {
+      assert.throws(function() {
+        helper.notHas({path: 'hooks.user.id'}, {fixed: [2, 3, 5]}, 22);
+      }, function(err) {
+        return err instanceof Error && err.message === 'The error is called next when assert faild.'
+      });
+      done();
+    });
+
+    it("fixed compare nothas true", function(done) {
+      var notHas = helper.notHas({path: 'hooks.user.id'}, {fixed: [1, 2, 3]}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        }
+      };
+      var res = {};
+      notHas(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("fixed compare notHas false", function(done) {
+      var notHas = helper.notHas({path: 'hooks.user.id'}, {fixed: [1, 2, 3]}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 1}
+        }
+      };
+      var res = {};
+      notHas(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+
+    it("Keypath compare notHas true", function(done) {
+      var notHas = helper.notHas({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 4}
+        },
+        params: {
+          users: '1,2,3'
+        }
+      };
+      var res = {};
+      notHas(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("Keypath compare notHas false", function(done) {
+      var notHas = helper.notHas({path: 'hooks.user.id'}, {path: 'params.users'}, Error('Hello'));
+      var req = {
+        hooks: {
+          user: {id: 2}
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      notHas(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Hello', error.message);
+        done();
+      });
+    });
+  });
+
+  describe("exists", function() {
+    it("keyPath type error", function(done) {
+      assert.throws(function() {
+        helper.exists({});
+      }, function(err) {
+        return err instanceof Error && err.message === 'Gets the value at path of object.'
+      });
+      done();
+    });
+
+    it("error type error", function(done) {
+      assert.throws(function() {
+        helper.exists('hooks.user.id', 22);
+      }, function(err) {
+        return err instanceof Error && err.message === 'The error is called next when assert faild.'
+      });
+      done();
+    });
+
+    it("assert exists true, isDelete 'no'", function(done) {
+      var exists = helper.exists('hooks.user', Error('hello world'));
+      var req = {
+        hooks: {
+          user: {id: 2, isDelete: 'no'}
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      exists(req, res, function(error) {
+        assert.equal(null, error);
+        done();
+      });
+    });
+
+    it("assert exists false", function(done) {
+      var exists = helper.exists('hooks.user', Error('hello world'));
+      var req = {
+        hooks: {
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      exists(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('hello world', error.message);
+        done();
+      });
+    });
+
+    it("assert exists true isDelete 'yes'", function(done) {
+      var exists = helper.exists('hooks.user', Error('hello world'));
+      var req = {
+        hooks: {
+          user: {id: 2, isDelete: 'yes'}
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      exists(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('hello world', error.message);
+        done();
+      });
+    });
+
+  });
+
 });
