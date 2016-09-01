@@ -68,7 +68,7 @@ var notHas = function(obj1, obj2, error) {
 var exists = function(keyPath, error) {
   return function(req, res, next) {
     var model = _.get(req, keyPath);
-    if (model === undefined) return next(error);
+    if (model == undefined) return next(error);
     if (_.isObject(model) && model.isDelete === 'yes') return next(error);
     next();
   };
