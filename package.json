@@ -1,6 +1,6 @@
 {
   "name": "open-rest-helper-assert",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Controller helper assert for open-rest or restify, Used to get instance from Model",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,8 @@
   "homepage": "https://github.com/open-node/open-rest-helper-assert#readme",
   "dependencies": {
     "func-delegate": "^0.2.2",
-    "lodash": "^4.15.0"
+    "lodash": "^4.15.0",
+    "restify": "^4.1.1"
   },
   "devDependencies": {
     "codecov": "^1.0.1",

@@ -125,7 +125,7 @@ assert
 var assert = require('open-rest-helper-assert');
 
 // keyPath 从req上获取某个值的路径，例如: 'params.id', 'hooks.user.name', 分别代表读取 req.params.id, req.hooks.user.name
-// error 如果不想等报的错误，Error类型
+// error 如果不想等报的错误，Error类型, 默认值: new restify.NotFoundError('Resource not found.')
 
 assert.exists('hooks.users', error);
 

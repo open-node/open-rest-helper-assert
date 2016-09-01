@@ -674,6 +674,24 @@ describe("open-rest-helper-assert", function() {
       done();
     });
 
+    it("error defaultValue", function(done) {
+      var exists = helper.exists('hooks.users');
+      var req = {
+        hooks: {
+          user: {id: 2, isDelete: 'no'}
+        },
+        params: {
+          users: [1, 2, 3]
+        }
+      };
+      var res = {};
+      exists(req, res, function(error) {
+        assert.ok(error instanceof Error);
+        assert.equal('Resource not found.', error.message);
+        done();
+      });
+    });
+
     it("assert exists true, isDelete 'no'", function(done) {
       var exists = helper.exists('hooks.user', Error('hello world'));
       var req = {

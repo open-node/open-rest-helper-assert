@@ -1,4 +1,5 @@
 var delegate  = require('func-delegate')
+  , restify   = require('restify')
   , _         = require('lodash');
 
 // 检测某字段是否与指定的值是否相同，如果不同则报错
@@ -141,6 +142,7 @@ var existsSchemas = [{
   name: 'error',
   type: Error,
   allowNull: false,
+  defaultValue: new restify.NotFoundError('Resource not found.'),
   message: 'The error is called next when assert faild.'
 }];
 
