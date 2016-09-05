@@ -146,10 +146,12 @@ var existsSchemas = [{
   message: 'The error is called next when assert faild.'
 }];
 
-module.exports = {
-  equal: delegate(equal, equalSchemas),
-  notEqual: delegate(notEqual, equalSchemas),
-  has: delegate(has, hasSchemas),
-  notHas: delegate(notHas, hasSchemas),
-  exists: delegate(exists, existsSchemas)
+module.exports = function(rest) {
+  return rest.helper.assert = {
+    equal: delegate(equal, equalSchemas),
+    notEqual: delegate(notEqual, equalSchemas),
+    has: delegate(has, hasSchemas),
+    notHas: delegate(notHas, hasSchemas),
+    exists: delegate(exists, existsSchemas)
+  };
 };

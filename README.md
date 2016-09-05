@@ -14,7 +14,10 @@ npm instsall open-rest-helper-assert --save
 ## assert.equal
 判断某两个值是否相等，相等则通过，不等则输出错误信息
 ```js
-var assert = require('open-rest-helper-assert');
+var rest = require('open-rest');
+var assert = require('open-rest-helper-assert')(rest);
+
+// assert Equivalent to rest.helper.assert
 
 // keyPath 从req上获取某个值的路径，例如: 'params.id', 'hooks.user.name', 分别代表读取 req.params.id, req.hooks.user.name
 // obj 需要比较的值,有两种情况
