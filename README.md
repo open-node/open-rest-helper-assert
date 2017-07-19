@@ -5,6 +5,9 @@ open-rest 的 helper 插件，用来对某些值做断言
 [![Build status](https://api.travis-ci.org/open-node/open-rest-helper-assert.svg?branch=master)](https://travis-ci.org/open-node/open-rest-helper-assert)
 [![codecov](https://codecov.io/gh/open-node/open-rest-helper-assert/branch/master/graph/badge.svg)](https://codecov.io/gh/open-node/open-rest-helper-assert)
 
+# Node version
+<pre> >= 6 </pre>
+
 # Usage
 
 ```bash
@@ -12,8 +15,8 @@ npm instsall open-rest-helper-assert --save
 ```
 
 ```js
-var rest = require('open-rest');
-var assert = require('open-rest-helper-assert')(rest);
+const rest = require('open-rest');
+const assert = require('open-rest-helper-assert')(rest);
 
 // assert Equivalent to rest.helper.assert
 ```

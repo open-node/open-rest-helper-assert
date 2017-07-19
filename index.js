@@ -1,11 +1,16 @@
 const delegate = require('func-delegate');
 const _ = require('lodash');
 
+const getValue = (req, obj) => {
+  if (_.has(obj, 'path')) return _.get(req, obj.path);
+  return obj.fixed;
+};
+
 module.exports = (rest) => {
   // 检测某字段是否与指定的值是否相同，如果不同则报错
   const equal = (keyPath, obj, error) => (
     (req, res, next) => {
-      const value = obj.fixed ? obj.fixed : _.get(req, obj.path);
+      const value = getValue(req, obj);
       if (_.get(req, keyPath) === value) return next();
       return next(error);
     }
@@ -15,7 +20,7 @@ module.exports = (rest) => {
   //
   const notEqual = (keyPath, obj, error) => (
     (req, res, next) => {
-      const value = obj.fixed ? obj.fixed : _.get(req, obj.path);
+      const value = getValue(req, obj);
       if (_.get(req, keyPath) !== value) return next();
       return next(error);
     }
@@ -23,8 +28,8 @@ module.exports = (rest) => {
 
   const _has = (obj1, obj2, has) => (
     (req) => {
-      const value1 = obj1.fixed ? obj1.fixed : _.get(req, obj1.path);
-      let value2 = obj2.fixed ? obj2.fixed : _.get(req, obj2.path);
+      const value1 = getValue(req, obj1);
+      let value2 = getValue(req, obj2);
       if (_.isString(value2)) {
         value2 = value2.split(',');
         if (_.isNumber(value1)) {
